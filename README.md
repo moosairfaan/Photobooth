@@ -2,6 +2,49 @@
 
 A browser-based vintage photobooth: four sequential shots, film-style strip, and three ways to keep it — email, QR scan, or download.
 
+**Live site:** deploy with [GitHub + Vercel](#deploy-on-github--vercel) (see below).
+
+## Deploy on GitHub + Vercel
+
+### 1. Push to GitHub
+
+```bash
+cd /Users/moosairfaan/Desktop/photobooth
+
+# Log in once (opens browser)
+gh auth login
+
+# Create repo and push (pick a name, e.g. photobooth)
+gh repo create photobooth --public --source=. --remote=origin --push
+```
+
+Or create a repo manually at [github.com/new](https://github.com/new), then:
+
+```bash
+git remote add origin https://github.com/YOUR_USERNAME/photobooth.git
+git branch -M main
+git push -u origin main
+```
+
+### 2. Deploy on Vercel
+
+1. Go to [vercel.com/new](https://vercel.com/new) and sign in with GitHub.
+2. **Import** your `photobooth` repository.
+3. Leave defaults (no build command, output is the repo root) → **Deploy**.
+
+Vercel will assign a URL like `https://photobooth-xxx.vercel.app`.
+
+### 3. After deploy — allow your production URL
+
+- **EmailJS:** [dashboard](https://dashboard.emailjs.com/) → Account → Security → add your Vercel URL (and `https://*.vercel.app` if needed).
+- **Cloudinary:** unsigned preset works from any domain; no extra step.
+
+Camera and mic require **HTTPS** — Vercel provides that automatically.
+
+### Redeploy
+
+Push to `main` on GitHub; Vercel redeploys automatically if the project is linked.
+
 ## Run locally
 
 Serve the folder over HTTP (required for camera access):
