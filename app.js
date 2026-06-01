@@ -1,5 +1,5 @@
 /**
- * Old Friends Photobooth — EmailJS + Gmail
+ * Downtown Strip Photobooth — EmailJS + Gmail
  * https://www.emailjs.com/
  *
  * In EmailJS → Email Templates → your template:
@@ -22,7 +22,46 @@ const CLOUDINARY_CONFIG = {
   uploadPreset: "Photobooth",
 };
 
-const STRIP_LABEL = "old friends • nyc";
+const THEMES = {
+  oldies: {
+    stripLabel: "old friends • nyc",
+    stripBg: "#faf6f0",
+    borderColor: "#faf6f0",
+    labelColor: "#5c4033",
+    labelFont: 'italic 11px "IM Fell English", Georgia, serif',
+    cameraFilter: "sepia(0.6) contrast(1.1) brightness(0.95)",
+    canvasGrain: true,
+  },
+  cyberpunk: {
+    stripLabel: "// NEON_RUN • 2077",
+    stripBg: "#0a0a12",
+    borderColor: "#00f5ff",
+    labelColor: "#00f5ff",
+    labelFont: '11px "Share Tech Mono", monospace',
+    cameraFilter: "saturate(1.8) hue-rotate(160deg) contrast(1.3)",
+    canvasGrain: false,
+  },
+  fantasy: {
+    stripLabel: "✦ wish upon a star ✦",
+    stripBg: "#fffafc",
+    borderColor: "#f3e8ff",
+    labelColor: "#7d5a8c",
+    labelFont: 'italic 12px "Cormorant Garamond", Georgia, serif',
+    cameraFilter: "saturate(1.3) brightness(1.1) hue-rotate(20deg)",
+    canvasGrain: false,
+  },
+  simple: {
+    stripLabel: "DOWNTOWN STRIP",
+    stripBg: "#ffffff",
+    borderColor: "#ffffff",
+    labelColor: "#111111",
+    labelFont: '600 10px "Instrument Sans", "DM Sans", sans-serif',
+    cameraFilter: "grayscale(1) contrast(1.05)",
+    canvasGrain: false,
+  },
+};
+
+let selectedTheme = "oldies";
 const COUNTDOWN_SECONDS = 3;
 const PHOTO_COUNT = 4;
 const STRIP_WIDTH = 280;
@@ -32,6 +71,7 @@ const LABEL_HEIGHT = 36;
 
 const screens = {
   landing: document.getElementById("screen-landing"),
+  themes: document.getElementById("screen-themes"),
   camera: document.getElementById("screen-camera"),
   strip: document.getElementById("screen-strip"),
   email: document.getElementById("screen-email"),
@@ -60,6 +100,26 @@ let cloudinaryImageUrl = null;
 let isCapturing = false;
 
 // ——— Screen navigation ———
+function setTheme(themeId) {
+  selectedTheme = themeId;
+  document.body.classList.remove(
+    "theme-oldies", "theme-cyberpunk", "theme-fantasy", "theme-simple"
+  );
+  document.body.classList.add(`theme-${themeId}`);
+}
+
+function getTheme() {
+  return THEMES[selectedTheme] || THEMES.oldies;
+}
+
+function syncThemeCards() {
+  document.querySelectorAll(".theme-card").forEach((c) => {
+    const on = c.dataset.theme === selectedTheme;
+    c.classList.toggle("theme-card--selected", on);
+    c.setAttribute("aria-selected", on ? "true" : "false");
+  });
+}
+
 function showScreen(name) {
   Object.entries(screens).forEach(([key, el]) => {
     if (!el) return;
@@ -150,7 +210,10 @@ function captureFrame() {
   const ctx = captureCanvas.getContext("2d");
   ctx.translate(w, 0);
   ctx.scale(-1, 1);
+  const theme = getTheme();
+  ctx.filter = theme.cameraFilter;
   ctx.drawImage(video, 0, 0, w, h);
+  ctx.filter = "none";
   return captureCanvas.toDataURL("image/jpeg", 0.92);
 }
 
@@ -264,7 +327,8 @@ async function buildStrip() {
   stripCanvas.height = totalH;
   const ctx = stripCanvas.getContext("2d");
 
-  ctx.fillStyle = "#faf6f0";
+  const theme = getTheme();
+  ctx.fillStyle = theme.stripBg;
   ctx.fillRect(0, 0, STRIP_WIDTH, totalH);
 
   let y = BORDER;
@@ -291,28 +355,28 @@ async function buildStrip() {
     temp.height = PHOTO_HEIGHT;
     const tCtx = temp.getContext("2d");
     tCtx.drawImage(img, sx, sy, sw, sh, 0, 0, innerW, PHOTO_HEIGHT);
-    applySepia(tCtx, innerW, PHOTO_HEIGHT);
+    if (selectedTheme === "oldies") applySepia(tCtx, innerW, PHOTO_HEIGHT);
     ctx.drawImage(temp, BORDER, y);
 
     y += PHOTO_HEIGHT;
     if (i < capturedPhotos.length - 1) {
-      ctx.fillStyle = "#faf6f0";
+      ctx.fillStyle = theme.borderColor;
       ctx.fillRect(0, y, STRIP_WIDTH, BORDER);
       y += BORDER;
     }
   }
 
   y += BORDER * 0.5;
-  ctx.fillStyle = "#faf6f0";
+  ctx.fillStyle = theme.stripBg;
   ctx.fillRect(0, y, STRIP_WIDTH, LABEL_HEIGHT);
 
-  ctx.fillStyle = "#5c4033";
-  ctx.font = 'italic 11px "IM Fell English", Georgia, serif';
+  ctx.fillStyle = theme.labelColor;
+  ctx.font = theme.labelFont;
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
-  ctx.fillText(STRIP_LABEL, STRIP_WIDTH / 2, y + LABEL_HEIGHT / 2);
+  ctx.fillText(theme.stripLabel, STRIP_WIDTH / 2, y + LABEL_HEIGHT / 2);
 
-  drawGrain(ctx, STRIP_WIDTH, totalH, 0.1);
+  if (theme.canvasGrain) drawGrain(ctx, STRIP_WIDTH, totalH, 0.1);
   stripDataUrl = stripCanvas.toDataURL("image/png");
   resetShareState();
 }
@@ -369,7 +433,7 @@ function formatEmailJSError(err) {
 function downloadStrip() {
   const href = stripDataUrl || stripCanvas.toDataURL("image/png");
   downloadLink.href = href;
-  downloadLink.download = `old-friends-strip-${Date.now()}.png`;
+  downloadLink.download = `downtown-strip-${selectedTheme}-${Date.now()}.png`;
   downloadLink.click();
 }
 
@@ -429,8 +493,8 @@ function renderQRCode(url) {
     text: url,
     width: 168,
     height: 168,
-    colorDark: "#3d2e24",
-    colorLight: "#faf6f0",
+    colorDark: getComputedStyle(document.body).getPropertyValue("--qr-dark").trim() || "#111",
+    colorLight: getComputedStyle(document.body).getPropertyValue("--qr-light").trim() || "#fff",
     correctLevel: QRCode.CorrectLevel.M,
   });
 }
@@ -493,7 +557,28 @@ async function sendEmail(recipientEmail) {
 }
 
 // ——— Event listeners ———
-document.getElementById("btn-start").addEventListener("click", async () => {
+document.getElementById("btn-start").addEventListener("click", () => {
+  syncThemeCards();
+  showScreen("themes");
+});
+
+document.querySelectorAll(".theme-card").forEach((card) => {
+  card.addEventListener("click", () => {
+    document.querySelectorAll(".theme-card").forEach((c) => {
+      c.classList.remove("theme-card--selected");
+      c.setAttribute("aria-selected", "false");
+    });
+    card.classList.add("theme-card--selected");
+    card.setAttribute("aria-selected", "true");
+    setTheme(card.dataset.theme);
+  });
+});
+
+document.getElementById("btn-back-landing").addEventListener("click", () => {
+  showScreen("landing");
+});
+
+document.getElementById("btn-enter-booth").addEventListener("click", async () => {
   try {
     showScreen("camera");
     await startCamera();
@@ -504,7 +589,7 @@ document.getElementById("btn-start").addEventListener("click", async () => {
     alert(
       "Could not access the camera. Please allow camera permission and try again."
     );
-    showScreen("landing");
+    showScreen("themes");
     stopCamera();
   }
 });
@@ -513,7 +598,7 @@ document.getElementById("btn-cancel-camera").addEventListener("click", () => {
   isCapturing = false;
   hideCountdown();
   stopCamera();
-  showScreen("landing");
+  showScreen("themes");
 });
 
 document.getElementById("btn-retake").addEventListener("click", async () => {
@@ -578,6 +663,7 @@ emailForm.addEventListener("submit", async (e) => {
   sendBtn.classList.add("btn--loading");
 
   try {
+    setTheme("oldies");
     initEmailJS();
     await sendEmail(email);
     showScreen("success");

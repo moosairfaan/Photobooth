@@ -3,31 +3,61 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-  <title>Old Friends — Photobooth</title>
+  <title>Downtown Strip — Photobooth</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=IM+Fell+English:ital@0;1&family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600&family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,600&family=IM+Fell+English:ital@0;1&family=Instrument+Sans:wght@400;600&family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=Share+Tech+Mono&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="themes.css">
 </head>
-<body>
+<body class="theme-oldies">
   <div class="grain-global" aria-hidden="true"></div>
   <div class="vignette" aria-hidden="true"></div>
 
   <main id="app" class="booth">
-    <!-- Landing -->
     <section id="screen-landing" class="screen screen--active" aria-label="Welcome">
       <div class="signage">
-        <p class="signage__eyebrow">est. whenever</p>
-        <h1 class="signage__title">Old Friends</h1>
+        <p class="signage__eyebrow">main street · after dark</p>
+        <h1 class="signage__title">Downtown Strip</h1>
         <p class="signage__subtitle">Photobooth</p>
         <div class="signage__ornament" aria-hidden="true">✦</div>
         <p class="signage__tagline">Four moments. One strip. Keep the proof.</p>
       </div>
       <button type="button" class="btn btn--primary" id="btn-start">Step inside</button>
-      <p class="hint">Camera required · Best with friends</p>
+      <p class="hint">Camera required · Pick your vibe inside</p>
     </section>
 
-    <!-- Camera -->
+    <section id="screen-themes" class="screen" aria-label="Choose your vibe" hidden>
+      <header class="booth-header">
+        <h2 class="booth-header__title">Choose your vibe</h2>
+        <p class="booth-header__sub">Sets the look for your whole strip</p>
+      </header>
+      <div class="theme-grid" role="listbox" aria-label="Photobooth themes">
+        <button type="button" class="theme-card theme-card--selected" data-theme="oldies" role="option" aria-selected="true">
+          <span class="theme-card__swatch theme-card__swatch--oldies" aria-hidden="true"></span>
+          <span class="theme-card__name">Oldies</span>
+          <span class="theme-card__desc">Warm film &amp; sepia nostalgia</span>
+        </button>
+        <button type="button" class="theme-card" data-theme="cyberpunk" role="option" aria-selected="false">
+          <span class="theme-card__swatch theme-card__swatch--cyberpunk" aria-hidden="true"></span>
+          <span class="theme-card__name">Cyberpunk</span>
+          <span class="theme-card__desc">Neon noir &amp; glitch energy</span>
+        </button>
+        <button type="button" class="theme-card" data-theme="fantasy" role="option" aria-selected="false">
+          <span class="theme-card__swatch theme-card__swatch--fantasy" aria-hidden="true"></span>
+          <span class="theme-card__name">Fantasy &amp; Whimsical</span>
+          <span class="theme-card__desc">Dreamy pastels &amp; starlight</span>
+        </button>
+        <button type="button" class="theme-card" data-theme="simple" role="option" aria-selected="false">
+          <span class="theme-card__swatch theme-card__swatch--simple" aria-hidden="true"></span>
+          <span class="theme-card__name">Simple</span>
+          <span class="theme-card__desc">Clean black &amp; white minimal</span>
+        </button>
+      </div>
+      <button type="button" class="btn btn--primary" id="btn-enter-booth">Enter the booth</button>
+      <button type="button" class="btn btn--ghost" id="btn-back-landing">Back</button>
+    </section>
+
     <section id="screen-camera" class="screen" aria-label="Camera" hidden>
       <header class="booth-header">
         <h2 class="booth-header__title">Look alive</h2>
@@ -37,16 +67,16 @@
         <div class="viewfinder">
           <video id="camera-preview" autoplay playsinline muted aria-label="Camera preview"></video>
           <canvas id="capture-canvas" hidden></canvas>
+          <div class="viewfinder__scanlines" aria-hidden="true"></div>
           <div id="countdown" class="countdown" aria-live="polite" aria-atomic="true"></div>
           <div id="flash" class="flash" aria-hidden="true"></div>
           <div class="viewfinder__frame" aria-hidden="true"></div>
         </div>
         <p class="shot-indicator"><span id="shot-current">1</span> of 4</p>
       </div>
-      <button type="button" class="btn btn--ghost" id="btn-cancel-camera">Leave booth</button>
+      <button type="button" class="btn btn--ghost" id="btn-cancel-camera">Change vibe</button>
     </section>
 
-    <!-- Strip result -->
     <section id="screen-strip" class="screen" aria-label="Your strip" hidden>
       <header class="booth-header booth-header--compact">
         <h2 class="booth-header__title">Your strip</h2>
@@ -55,38 +85,33 @@
       <div class="strip-display">
         <div id="strip-container" class="strip-container">
           <canvas id="strip-canvas" class="strip-canvas"></canvas>
+          <div id="strip-overlay" class="strip-overlay" aria-hidden="true"></div>
         </div>
       </div>
       <div class="share-panel">
         <p class="share-panel__heading">Take it with you</p>
-
         <button type="button" class="share-option" id="btn-share-email">
           <span class="share-option__label">Send to email</span>
           <span class="share-option__hint">We&rsquo;ll mail your strip</span>
         </button>
-
         <button type="button" class="share-option" id="btn-share-scan" aria-expanded="false" aria-controls="qr-panel">
           <span class="share-option__label">Scan to save</span>
           <span class="share-option__hint">Open on your phone &amp; save</span>
         </button>
-
         <div id="qr-panel" class="qr-panel" hidden>
           <p class="qr-panel__title">Scan to save your strip</p>
           <div id="qr-code" class="qr-panel__code" aria-label="QR code to download strip"></div>
           <p id="qr-status" class="qr-panel__status">Preparing your strip…</p>
         </div>
-
         <button type="button" class="share-option" id="btn-share-download">
           <span class="share-option__label">Download</span>
           <span class="share-option__hint">Save to this device</span>
         </button>
       </div>
-
       <button type="button" class="btn btn--ghost btn--retake" id="btn-retake">Retake</button>
       <a id="download-link" href="#" download hidden></a>
     </section>
 
-    <!-- Email -->
     <section id="screen-email" class="screen" aria-label="Email your strip" hidden>
       <header class="booth-header booth-header--compact">
         <h2 class="booth-header__title">Mail it home</h2>
@@ -104,7 +129,6 @@
       <p class="hint hint--small">Powered by EmailJS · No account needed</p>
     </section>
 
-    <!-- Success -->
     <section id="screen-success" class="screen" aria-label="Success" hidden>
       <div class="signage signage--success">
         <div class="signage__ornament" aria-hidden="true">✦</div>

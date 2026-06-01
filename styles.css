@@ -1,4 +1,4 @@
-/* Old Friends NYC — vintage photobooth */
+/* Downtown Strip — base layout (themes in themes.css) */
 
 :root {
   --amber-deep: #5c4033;
@@ -33,8 +33,8 @@ html {
 body {
   margin: 0;
   min-height: 100dvh;
-  font-family: var(--font-body);
-  color: var(--brown-ink);
+  font-family: var(--font-body, "Libre Baskerville", Georgia, serif);
+  color: var(--text-body, var(--brown-ink));
   background-color: var(--paper);
   background-image:
     radial-gradient(ellipse 120% 80% at 50% 0%, rgba(196, 165, 116, 0.15), transparent 50%),
@@ -369,18 +369,6 @@ body {
   box-shadow:
     0 12px 40px rgba(61, 46, 36, 0.2),
     0 2px 0 var(--paper-shadow);
-  border-radius: 2px;
-}
-
-.strip-container::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  opacity: 0.25;
-  mix-blend-mode: multiply;
-  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='sg'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.95' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23sg)'/%3E%3C/svg%3E");
-  background-size: 120px 120px;
   border-radius: 2px;
 }
 
