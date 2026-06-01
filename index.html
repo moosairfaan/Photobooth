@@ -54,6 +54,20 @@
           <span class="theme-card__desc">Clean black &amp; white minimal</span>
         </button>
       </div>
+
+      <div class="camera-setup">
+        <p class="camera-setup__label">Camera</p>
+        <div class="pill-group" role="group" aria-label="Camera direction">
+          <button type="button" class="pill pill--active" data-facing="user" id="pill-selfie">Selfie</button>
+          <button type="button" class="pill" data-facing="environment" id="pill-back">Back camera</button>
+        </div>
+        <p class="camera-setup__label">Flash</p>
+        <div class="pill-group" role="group" aria-label="Flash">
+          <button type="button" class="pill pill--active" data-flash="on" id="pill-flash-on"><span class="pill__icon" aria-hidden="true">⚡</span> Flash on</button>
+          <button type="button" class="pill" data-flash="off" id="pill-flash-off">Flash off</button>
+        </div>
+      </div>
+
       <button type="button" class="btn btn--primary" id="btn-enter-booth">Enter the booth</button>
       <button type="button" class="btn btn--ghost" id="btn-back-landing">Back</button>
     </section>

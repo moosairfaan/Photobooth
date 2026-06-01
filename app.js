@@ -99,6 +99,14 @@ let stripDataUrl = null;
 let cloudinaryImageUrl = null;
 let isCapturing = false;
 
+/** Theme-screen choices (editable until Enter the booth) */
+let uiCameraFacing = "user";
+let uiFlashEnabled = true;
+
+/** Locked for the active booth session */
+let sessionCameraFacing = "user";
+let sessionFlashEnabled = true;
+
 // ——— Screen navigation ———
 function setTheme(themeId) {
   selectedTheme = themeId;
@@ -118,6 +126,30 @@ function syncThemeCards() {
     c.classList.toggle("theme-card--selected", on);
     c.setAttribute("aria-selected", on ? "true" : "false");
   });
+}
+
+function syncCameraPills() {
+  document.querySelectorAll("[data-facing]").forEach((pill) => {
+    const on = pill.dataset.facing === uiCameraFacing;
+    pill.classList.toggle("pill--active", on);
+  });
+  document.querySelectorAll("[data-flash]").forEach((pill) => {
+    const on =
+      (pill.dataset.flash === "on" && uiFlashEnabled) ||
+      (pill.dataset.flash === "off" && !uiFlashEnabled);
+    pill.classList.toggle("pill--active", on);
+  });
+}
+
+function lockSessionCameraSettings() {
+  sessionCameraFacing = uiCameraFacing;
+  sessionFlashEnabled = uiFlashEnabled;
+}
+
+function restoreCameraUiFromSession() {
+  uiCameraFacing = sessionCameraFacing;
+  uiFlashEnabled = sessionFlashEnabled;
+  syncCameraPills();
 }
 
 function showScreen(name) {
@@ -178,10 +210,10 @@ function playShutter() {
 
 // ——— Camera ———
 async function startCamera() {
-  if (mediaStream) return;
+  stopCamera();
   const constraints = {
     video: {
-      facingMode: "user",
+      facingMode: sessionCameraFacing,
       width: { ideal: 1280 },
       height: { ideal: 960 },
     },
@@ -189,6 +221,7 @@ async function startCamera() {
   };
   mediaStream = await navigator.mediaDevices.getUserMedia(constraints);
   video.srcObject = mediaStream;
+  video.classList.toggle("camera-preview--back", sessionCameraFacing === "environment");
   await video.play();
 }
 
@@ -208,8 +241,10 @@ function captureFrame() {
   captureCanvas.width = w;
   captureCanvas.height = h;
   const ctx = captureCanvas.getContext("2d");
-  ctx.translate(w, 0);
-  ctx.scale(-1, 1);
+  if (sessionCameraFacing === "user") {
+    ctx.translate(w, 0);
+    ctx.scale(-1, 1);
+  }
   const theme = getTheme();
   ctx.filter = theme.cameraFilter;
   ctx.drawImage(video, 0, 0, w, h);
@@ -236,10 +271,29 @@ function hideCountdown() {
   countdownEl.textContent = "";
 }
 
-function triggerFlash() {
-  flashEl.classList.remove("flash--active");
-  void flashEl.offsetWidth;
-  flashEl.classList.add("flash--active");
+async function triggerFlash() {
+  if (sessionFlashEnabled) {
+    flashEl.classList.remove("flash--active");
+    void flashEl.offsetWidth;
+    flashEl.classList.add("flash--active");
+  }
+
+  if (
+    sessionFlashEnabled &&
+    sessionCameraFacing === "environment" &&
+    mediaStream
+  ) {
+    try {
+      const track = mediaStream.getVideoTracks()[0];
+      if (!track) return;
+      await track.applyConstraints({ advanced: [{ torch: true }] });
+      setTimeout(() => {
+        track.applyConstraints({ advanced: [{ torch: false }] }).catch(() => {});
+      }, 300);
+    } catch (_) {
+      /* torch unsupported — white overlay only */
+    }
+  }
 }
 
 async function runCountdown() {
@@ -261,7 +315,7 @@ async function captureSequence() {
     shotCurrentEl.textContent = String(shot + 1);
     await runCountdown();
     if (!isCapturing) return;
-    triggerFlash();
+    await triggerFlash();
     playShutter();
     const frame = captureFrame();
     if (frame) capturedPhotos.push(frame);
@@ -559,6 +613,7 @@ async function sendEmail(recipientEmail) {
 // ——— Event listeners ———
 document.getElementById("btn-start").addEventListener("click", () => {
   syncThemeCards();
+  syncCameraPills();
   showScreen("themes");
 });
 
@@ -578,7 +633,22 @@ document.getElementById("btn-back-landing").addEventListener("click", () => {
   showScreen("landing");
 });
 
+document.querySelectorAll("[data-facing]").forEach((pill) => {
+  pill.addEventListener("click", () => {
+    uiCameraFacing = pill.dataset.facing;
+    syncCameraPills();
+  });
+});
+
+document.querySelectorAll("[data-flash]").forEach((pill) => {
+  pill.addEventListener("click", () => {
+    uiFlashEnabled = pill.dataset.flash === "on";
+    syncCameraPills();
+  });
+});
+
 document.getElementById("btn-enter-booth").addEventListener("click", async () => {
+  lockSessionCameraSettings();
   try {
     showScreen("camera");
     await startCamera();
@@ -598,6 +668,8 @@ document.getElementById("btn-cancel-camera").addEventListener("click", () => {
   isCapturing = false;
   hideCountdown();
   stopCamera();
+  restoreCameraUiFromSession();
+  syncThemeCards();
   showScreen("themes");
 });
 
@@ -663,8 +735,9 @@ emailForm.addEventListener("submit", async (e) => {
   sendBtn.classList.add("btn--loading");
 
   try {
-    setTheme("oldies");
-    initEmailJS();
+setTheme("oldies");
+syncCameraPills();
+initEmailJS();
     await sendEmail(email);
     showScreen("success");
   } catch (err) {

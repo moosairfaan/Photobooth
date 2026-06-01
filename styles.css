@@ -284,6 +284,10 @@ body {
   display: block;
 }
 
+#camera-preview.camera-preview--back {
+  transform: none;
+}
+
 .viewfinder__frame {
   position: absolute;
   inset: 12px;
