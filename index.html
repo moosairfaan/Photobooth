@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Old Friends — Photobooth</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=IM+Fell+English:ital@0;1&family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="grain-global" aria-hidden="true"></div>
+  <div class="vignette" aria-hidden="true"></div>
+
+  <main id="app" class="booth">
+    <!-- Landing -->
+    <section id="screen-landing" class="screen screen--active" aria-label="Welcome">
+      <div class="signage">
+        <p class="signage__eyebrow">est. whenever</p>
+        <h1 class="signage__title">Old Friends</h1>
+        <p class="signage__subtitle">Photobooth</p>
+        <div class="signage__ornament" aria-hidden="true">✦</div>
+        <p class="signage__tagline">Four moments. One strip. Keep the proof.</p>
+      </div>
+      <button type="button" class="btn btn--primary" id="btn-start">Step inside</button>
+      <p class="hint">Camera required · Best with friends</p>
+    </section>
+
+    <!-- Camera -->
+    <section id="screen-camera" class="screen" aria-label="Camera" hidden>
+      <header class="booth-header">
+        <h2 class="booth-header__title">Look alive</h2>
+        <p class="booth-header__sub">Four poses — don&rsquo;t blink</p>
+      </header>
+      <div class="viewfinder-wrap">
+        <div class="viewfinder">
+          <video id="camera-preview" autoplay playsinline muted aria-label="Camera preview"></video>
+          <canvas id="capture-canvas" hidden></canvas>
+          <div id="countdown" class="countdown" aria-live="polite" aria-atomic="true"></div>
+          <div id="flash" class="flash" aria-hidden="true"></div>
+          <div class="viewfinder__frame" aria-hidden="true"></div>
+        </div>
+        <p class="shot-indicator"><span id="shot-current">1</span> of 4</p>
+      </div>
+      <button type="button" class="btn btn--ghost" id="btn-cancel-camera">Leave booth</button>
+    </section>
+
+    <!-- Strip result -->
+    <section id="screen-strip" class="screen" aria-label="Your strip" hidden>
+      <header class="booth-header booth-header--compact">
+        <h2 class="booth-header__title">Your strip</h2>
+        <p class="booth-header__sub">Choose how to keep it</p>
+      </header>
+      <div class="strip-display">
+        <div id="strip-container" class="strip-container">
+          <canvas id="strip-canvas" class="strip-canvas"></canvas>
+        </div>
+      </div>
+      <div class="share-panel">
+        <p class="share-panel__heading">Take it with you</p>
+
+        <button type="button" class="share-option" id="btn-share-email">
+          <span class="share-option__label">Send to email</span>
+          <span class="share-option__hint">We&rsquo;ll mail your strip</span>
+        </button>
+
+        <button type="button" class="share-option" id="btn-share-scan" aria-expanded="false" aria-controls="qr-panel">
+          <span class="share-option__label">Scan to save</span>
+          <span class="share-option__hint">Open on your phone &amp; save</span>
+        </button>
+
+        <div id="qr-panel" class="qr-panel" hidden>
+          <p class="qr-panel__title">Scan to save your strip</p>
+          <div id="qr-code" class="qr-panel__code" aria-label="QR code to download strip"></div>
+          <p id="qr-status" class="qr-panel__status">Preparing your strip…</p>
+        </div>
+
+        <button type="button" class="share-option" id="btn-share-download">
+          <span class="share-option__label">Download</span>
+          <span class="share-option__hint">Save to this device</span>
+        </button>
+      </div>
+
+      <button type="button" class="btn btn--ghost btn--retake" id="btn-retake">Retake</button>
+      <a id="download-link" href="#" download hidden></a>
+    </section>
+
+    <!-- Email -->
+    <section id="screen-email" class="screen" aria-label="Email your strip" hidden>
+      <header class="booth-header booth-header--compact">
+        <h2 class="booth-header__title">Mail it home</h2>
+        <p class="booth-header__sub">We&rsquo;ll send your strip as a photo</p>
+      </header>
+      <form id="email-form" class="email-form" novalidate>
+        <label class="field">
+          <span class="field__label">Your email</span>
+          <input type="email" id="email-input" class="field__input" placeholder="you@example.com" required autocomplete="email">
+        </label>
+        <p id="email-error" class="form-error" role="alert" hidden></p>
+        <button type="submit" class="btn btn--primary" id="btn-send">Send strip</button>
+        <button type="button" class="btn btn--ghost" id="btn-back-strip">Back</button>
+      </form>
+      <p class="hint hint--small">Powered by EmailJS · No account needed</p>
+    </section>
+
+    <!-- Success -->
+    <section id="screen-success" class="screen" aria-label="Success" hidden>
+      <div class="signage signage--success">
+        <div class="signage__ornament" aria-hidden="true">✦</div>
+        <h2 class="signage__title signage__title--sm">Check your inbox!</h2>
+        <p class="signage__tagline">Your strip is on its way.<br>Thanks for stepping inside.</p>
+      </div>
+      <div class="actions">
+        <button type="button" class="btn btn--primary" id="btn-another">Take another strip</button>
+        <button type="button" class="btn btn--ghost" id="btn-save-success">Save strip</button>
+      </div>
+    </section>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
